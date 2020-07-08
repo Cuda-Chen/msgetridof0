@@ -1,3 +1,4 @@
+#include <stdio.h>
 
 #include "libmseed.h"
 
@@ -6,10 +7,10 @@
 int
 getRidOfZero (const char *inputfile, const char *outputfile)
 {
-  MS3Record *inputmsr     = NULL;
+  MS3Record *inputmsr      = NULL;
   MS3TraceList *outputmstl = NULL;
-  uint32_t flags     = 0;
-  int8_t verbose     = 0;
+  uint32_t flags           = 0;
+  int8_t verbose           = 0;
   int rv;
 
   int64_t psamples;
@@ -22,7 +23,7 @@ getRidOfZero (const char *inputfile, const char *outputfile)
   flags |= MSF_PACKVER2;
 
   /* Loop over the input file record by record */
-  while ((rv = ms3_readinputmsr (&inputmsr, inputfile, NULL, NULL,
+  while ((rv = ms3_readmsr (&inputmsr, inputfile, NULL, NULL,
                             flags, verbose)) == MS_NOERROR)
   {
     double squareSum = 0.0, value;
@@ -38,15 +39,15 @@ getRidOfZero (const char *inputfile, const char *outputfile)
     for (idx = 0; idx < inputmsr->numsamples; idx++)
     {
       sptr = (char *)inputmsr->datasamples + (idx * samplesize);
-      if (sampletype == 'i')
+      if (inputmsr->sampletype == 'i')
       {
         value = (double)(*(int32_t *)sptr);
       }
-      else if (sampletype == 'f')
+      else if (inputmsr->sampletype == 'f')
       {
         value = (double)(*(float *)sptr);
       }
-      else if (sampletype == 'd')
+      else if (inputmsr->sampletype == 'd')
       {
         value = (double)(*(double *)sptr);
       }
@@ -67,13 +68,13 @@ getRidOfZero (const char *inputfile, const char *outputfile)
     }
     else
     {
-      if (outputmstl3_addinputmsr (outputmstl, inputmsr, 0, 1, flags, NULL) == NULL)
+      if (mstl3_addmsr (outputmstl, inputmsr, 0, 1, flags, NULL) == NULL)
       {
         ms_log (2, "outputmstl3_addinputmsr() had problems\n");
         break;
       }
 
-      precords = outputmstl3_pack (outputmstl,
+      precords = mstl3_pack (outputmstl,
                              NULL,
                              NULL,
                              reclen,
@@ -86,7 +87,7 @@ getRidOfZero (const char *inputfile, const char *outputfile)
   }
 
   /* flush data */
-  precords = outputmstl3_pack (outputmstl,
+  precords = mstl3_pack (outputmstl,
                          NULL,
                          NULL,
                          reclen,
@@ -97,17 +98,17 @@ getRidOfZero (const char *inputfile, const char *outputfile)
                          NULL);
 
   /* Output the tracelist. */
-  precords = outputmstl3_writemseed (outputmstl, outputfile, 1, reclen,
+  precords = mstl3_writemseed (outputmstl, outputfile, 1, reclen,
                                encoding, flags, verbose);
 
   /* To make sure everything is clean up. */
   if (inputmsr)
   {
-    inputmsr3_free (&inputmsr);
+    msr3_free (&inputmsr);
   }
   if (outputmstl)
   {
-    outputmstl3_free (&outputmstl);
+    mstl3_free (&outputmstl, 0);
   }
 
   return 0;
