@@ -4,6 +4,23 @@
 
 #include "get_rid_of_zero.h"
 
+static void
+recordHandler (char *record, int reclen, void *handlerData)
+{
+  MS3Record *msr = NULL;
+
+  if (!msr3_parse (record, reclen, &msr, 0, 0))
+  {
+    msr3_print (msr, 0);
+  }
+  else
+  {
+    fprintf (stderr, "%s() Error parsing record\n", __func__);
+  }
+
+  msr3_free (&msr);
+}
+
 int
 getRidOfZero (const char *inputfile, const char *outputfile)
 {
@@ -15,12 +32,20 @@ getRidOfZero (const char *inputfile, const char *outputfile)
 
   int64_t psamples;
   int precords;
-  int reclen       = 1024;
+  int reclen       = 256;
   uint8_t encoding = DE_INT32;
 
   flags |= MSF_VALIDATECRC;
   flags |= MSF_UNPACKDATA;
+  flags |= MSF_MAINTAINMSTL;
   flags |= MSF_PACKVER2;
+
+  outputmstl = mstl3_init (NULL);
+  if (outputmstl == NULL)
+  {
+    ms_log (2, "Cannot allocate memory for tracelist.\n");
+    return -1;
+  }
 
   /* Loop over the input file record by record */
   while ((rv = ms3_readmsr (&inputmsr, inputfile, NULL, NULL,
@@ -70,12 +95,13 @@ getRidOfZero (const char *inputfile, const char *outputfile)
     {
       if (mstl3_addmsr (outputmstl, inputmsr, 0, 1, flags, NULL) == NULL)
       {
-        ms_log (2, "outputmstl3_addinputmsr() had problems\n");
+        ms_log (2, "mstl3_addmsr() had problems\n");
         break;
       }
 
+      ms_log (0, "Calling mstl3_pack() to generate records\n");
       precords = mstl3_pack (outputmstl,
-                             NULL,
+                             recordHandler,
                              NULL,
                              reclen,
                              encoding,
@@ -83,12 +109,15 @@ getRidOfZero (const char *inputfile, const char *outputfile)
                              flags,
                              verbose,
                              NULL);
+      ms_log (0, "mstl3_pack() created %d records containing %" PRId64 " samples\n",
+              precords, psamples);
     }
   }
 
   /* flush data */
+  /*ms_log (0, "Calling mstl3_pack() with MSF_FLUSHDATA flag\n");
   precords = mstl3_pack (outputmstl,
-                         NULL,
+                         recordHandler,
                          NULL,
                          reclen,
                          encoding,
@@ -96,6 +125,8 @@ getRidOfZero (const char *inputfile, const char *outputfile)
                          (flags | MSF_FLUSHDATA),
                          verbose,
                          NULL);
+  ms_log (0, "Final mstl3_pack() created %d records containing %" PRId64 " samples\n",
+          precords, psamples);*/
 
   /* Output the tracelist. */
   precords = mstl3_writemseed (outputmstl, outputfile, 1, reclen,

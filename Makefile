@@ -3,7 +3,7 @@ EXEC = msgetridof0
 COMMON = -I/usr/local -I.
 CFLAGS = -Wall
 LDFLAGS = -L/usr/local
-LDLIBS = -lmseed -lm
+LDLIBS = -lmseed
 
 OBJS = main.o get_rid_of_zero.o
 
