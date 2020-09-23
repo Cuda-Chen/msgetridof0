@@ -32,8 +32,9 @@ getRidOfZero (const char *inputfile, const char *outputfile)
 
   int64_t psamples;
   int precords;
-  int reclen       = 256;
-  uint8_t encoding = DE_INT32;
+  int reclen       = 512;
+  //uint8_t encoding = DE_INT32;
+  uint8_t encoding = DE_STEIM2;
 
   flags |= MSF_VALIDATECRC;
   flags |= MSF_UNPACKDATA;
@@ -99,7 +100,7 @@ getRidOfZero (const char *inputfile, const char *outputfile)
         break;
       }
 
-      ms_log (0, "Calling mstl3_pack() to generate records\n");
+      /*ms_log (0, "Calling mstl3_pack() to generate records\n");
       precords = mstl3_pack (outputmstl,
                              recordHandler,
                              NULL,
@@ -110,12 +111,13 @@ getRidOfZero (const char *inputfile, const char *outputfile)
                              verbose,
                              NULL);
       ms_log (0, "mstl3_pack() created %d records containing %" PRId64 " samples\n",
-              precords, psamples);
+              precords, psamples);*/
     }
   }
 
   /* flush data */
-  /*ms_log (0, "Calling mstl3_pack() with MSF_FLUSHDATA flag\n");
+  //ms_log (0, "Calling mstl3_pack() with MSF_FLUSHDATA flag\n");
+  ms_log (0, "Calling mstl3_pack()\n");
   precords = mstl3_pack (outputmstl,
                          recordHandler,
                          NULL,
@@ -126,7 +128,7 @@ getRidOfZero (const char *inputfile, const char *outputfile)
                          verbose,
                          NULL);
   ms_log (0, "Final mstl3_pack() created %d records containing %" PRId64 " samples\n",
-          precords, psamples);*/
+          precords, psamples);
 
   /* Output the tracelist. */
   precords = mstl3_writemseed (outputmstl, outputfile, 1, reclen,
