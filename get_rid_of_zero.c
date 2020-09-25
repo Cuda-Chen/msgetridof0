@@ -32,7 +32,7 @@ getRidOfZero (const char *inputfile, const char *outputfile)
 
   int64_t psamples;
   int precords;
-  int reclen       = 512;
+  int reclen = 512;
   //uint8_t encoding = DE_INT32;
   uint8_t encoding = DE_STEIM2;
 
